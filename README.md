@@ -1,5 +1,7 @@
-# Vision Transformer for Echocardiogram Predictions
+# Vision Transformer for Ejection Fraction Prediction from Echocardiograms
 The purporse of this repository is to try different *Vision Transformer* (ViT) models on medical video data and to deepen my understanding of PyTorch and Lightning. The EchoNet-Dynamic [[1]](#References) dataset is available after registration and contains 10,030 apical-4-chamber echocardiography videos with corresponding *ejection fraction* (EF).
+
+The original model was a two-step method, where first segmentations of the left heart chamber were computed to extract individual heartbeats and used as input gor the convolutional neural network. The final result was the mean over several subvideos. I omit this step and directly feed the whole echocardiogram video into the neural network.
 
 ## Results
 Mean squared error for Ejection Fraction prediction.

@@ -6,9 +6,9 @@ The original model was a two-step method, where first segmentations of the left 
 ## Results
 Mean squared error for Ejection Fraction prediction.
 
-|Model         | MAE|
-|:------        |:-------:|
-|EchoNet-Dynamic [[2]](#References)| 4.1[^1]|
+|Model         | MAE| MSE |
+|:------        |:-------:| :---:|
+|EchoNet-Dynamic [[2]](#References)| 4.1[^1]| $\emptyset$ |
 
 [^1]: Taken from publication.
 

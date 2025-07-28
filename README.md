@@ -8,7 +8,7 @@ Mean squared error for Ejection Fraction prediction.
 
 |Model         | MAE|
 |:------        |:-------:|
-|EchoNetDynamic [[2]](#References)| 4.1[^1]|
+|EchoNet-Dynamic [[2]](#References)| 4.1[^1]|
 
 [^1]: Taken from publication.
 

@@ -2,3 +2,7 @@ torch
 lightning
 torchvision
 tensorboard
+optuna
+pandas
+av
+torchcodec

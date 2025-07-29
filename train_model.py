@@ -8,10 +8,7 @@ from data_loader import EchoDataModule
 seed_everything(5, workers=True)
 
 
-def main():
-
-    echonet_dynamic = EchoDataModule(data_dir="data")
-
+def main(model, datamodule):
     trainer = L.Trainer(
         max_epochs=200,
         devices=1,
@@ -20,19 +17,18 @@ def main():
         callbacks=[EarlyStopping(monitor="val_loss", mode="min", patience=10)],
         fast_dev_run=False,
     )
-    model = MC3_18()
 
     tuner = Tuner(trainer)
-    lr_finder = tuner.lr_find(model, datamodule=echonet_dynamic)
-
+    lr_finder = tuner.lr_find(model, datamodule=datamodule)
     if lr_finder:
         new_lr = lr_finder.suggestion()
         model.hparams.lr = new_lr
 
-    trainer.fit(model=model, datamodule=echonet_dynamic)
-
-    trainer.test(ckpt_path="best", datamodule=echonet_dynamic)
+    trainer.fit(model=model, datamodule=datamodule)
+    trainer.test(ckpt_path="best", datamodule=datamodule)
 
 
 if __name__ == "__main__":
-    main()
+    echonet_dynamic = EchoDataModule(data_dir="data")
+    model = MC3_18()
+    main(model, echonet_dynamic)

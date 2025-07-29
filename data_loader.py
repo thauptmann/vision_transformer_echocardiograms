@@ -48,18 +48,18 @@ class EchoDataModule(LightningDataModule):
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            num_workers=4,
+            num_workers=8,
             drop_last=True,
             shuffle=True,
         )
 
     def val_dataloader(self):
         return DataLoader(
-            self.validation_dataset, batch_size=self.batch_size * 2, num_workers=4
+            self.validation_dataset, batch_size=self.batch_size * 2, num_workers=8
         )
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=1, num_workers=4)
+        return DataLoader(self.test_dataset, batch_size=1, num_workers=8)
 
 
 class EchoDataset(Dataset):

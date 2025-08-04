@@ -1,6 +1,7 @@
 import lightning as L
 from models.threeD_resnet import LitMC3_18
 from models.video_vision_transformer import LitVideoVisionTransformer
+from models.swin3d import LitVideoSwinTransformer
 from lightning import seed_everything
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.tuner import Tuner
@@ -49,6 +50,8 @@ if __name__ == "__main__":
         model = LitMC3_18()
     elif args.model == "vivit":
         model = LitVideoVisionTransformer(frames=args.frames)
+    elif args.model == "video_swin":
+        model = LitVideoSwinTransformer()
 
     echonet_dynamic = EchoDataModule(
         data_dir="data", batch_size=args.batch_size, n_frames=args.frames

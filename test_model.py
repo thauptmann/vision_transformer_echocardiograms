@@ -4,6 +4,7 @@ import lightning as L
 from data_loader import EchoDataModule
 from pathlib import Path
 
+from models.swin3d import LitVideoSwinTransformer
 from models.threeD_resnet import LitMC3_18
 from models.video_vision_transformer import LitVideoVisionTransformer
 
@@ -51,6 +52,8 @@ if __name__ == "__main__":
         model = LitMC3_18()
     elif args.model == "vivit":
         model = LitVideoVisionTransformer(frames=args.frames)
+    elif args.model == "video_swin":
+        model = LitVideoSwinTransformer()
 
     if Path(args.checkpoint_path).exists():
         main(args.checkpoint_path, echonet_dynamic, model)

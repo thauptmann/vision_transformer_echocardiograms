@@ -12,19 +12,19 @@ from torch.utils.data import DataLoader
 
 
 class EchoDataModule(LightningDataModule):
-    def __init__(self, data_dir: str = "", batch_size: int = 10):
+    def __init__(self, data_dir: str = "", batch_size: int = 10, n_frames=100):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.transforms = v2.RandomApply(
             [
-                v2.RandomAffine(degrees=25, translate=(0.05, 0.05), scale=(0.9, 1.0)),
-                v2.ColorJitter(),
-                v2.GaussianBlur(5),
+                v2.RandomAffine(degrees=25, translate=(0.05, 0.05), scale=(0.95, 1.0)),
                 v2.GaussianNoise(),
                 v2.RandomAdjustSharpness(0),
-            ]
+            ],
+            p=0.5,
         )
+        self.n_frames = n_frames
 
     def setup(self, stage):
         if stage == "fit":
@@ -32,16 +32,20 @@ class EchoDataModule(LightningDataModule):
                 data_dir=self.data_dir,
                 split="TRAIN",
                 transform=self.transforms,
+                n_frames=self.n_frames,
             )
             self.validation_dataset = EchoDataset(
                 data_dir=self.data_dir,
                 split="VAL",
+                use_full_video=True,
+                n_frames=self.n_frames,
             )
         if stage == "test":
             self.test_dataset = EchoDataset(
                 data_dir=self.data_dir,
                 split="TEST",
                 use_full_video=True,
+                n_frames=self.n_frames,
             )
 
     def train_dataloader(self):
@@ -55,11 +59,30 @@ class EchoDataModule(LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(
-            self.validation_dataset, batch_size=self.batch_size * 2, num_workers=8
+            self.validation_dataset,
+            batch_size=1,
+            num_workers=8,
+            collate_fn=self.full_video_to_batch_collate,
         )
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=1, num_workers=8)
+        return DataLoader(
+            self.test_dataset,
+            batch_size=1,
+            num_workers=8,
+            collate_fn=self.full_video_to_batch_collate,
+        )
+
+    def full_video_to_batch_collate(self, batch):
+        x, y = batch[0]
+        subvideo_list = [
+            x[:, a : a + self.n_frames, :, :]
+            for a in range(0, x.shape[1] - self.n_frames + 1, int(self.n_frames / 2))
+        ]
+        x_subvideo_batch = torch.stack(
+            subvideo_list,
+        )
+        return x_subvideo_batch, torch.Tensor([y])
 
 
 class EchoDataset(Dataset):
@@ -85,18 +108,18 @@ class EchoDataset(Dataset):
         return len(self.video_labels)
 
     def __getitem__(self, idx):
-        img_path = os.path.join(
-            self.video_directory,
-            self.video_labels.at[idx, "FileName"] + ".avi",
-        )
-        video = VideoDecoder(img_path)[:][:, 0:1, :, :]
-        video_frame_number = (
-            video.shape[0] if video.shape[0] < self.n_frames else self.n_frames
-        )
+        filename = self.video_labels.at[idx, "FileName"] + ".avi"
+        video_path = os.path.join(self.video_directory, filename)
+        video = VideoDecoder(video_path)[:][:, 0:1, :, :]  # keep only one channel
 
-        if self.use_full_video:
+        # Determine number of frames to use
+        n_available_frames = video.shape[0]
+        video_frame_number = min(n_available_frames, self.n_frames)
+
+        if self.use_full_video and n_available_frames > self.n_frames:
             padded_video = video
         else:
+            start = 0
             padded_video = torch.zeros(
                 [self.n_frames, 1, self.resolution, self.resolution]
             )
@@ -104,10 +127,6 @@ class EchoDataset(Dataset):
                 n_frames = video.shape[0]
                 if n_frames > self.n_frames:
                     start = random.randint(0, n_frames - self.n_frames)
-                else:
-                    start = 0
-            else:
-                start = 0
 
             padded_video[:video_frame_number, :, :, :] += video[
                 start : start + video_frame_number, :, :, :
